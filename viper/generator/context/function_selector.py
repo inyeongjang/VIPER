@@ -2,7 +2,7 @@ import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from viper.generator.llm.base_client import LLMClient
 
 
 @dataclass
@@ -14,16 +14,6 @@ class VulnerableFunctionCandidate:
     rank: int
     reason: str
 
-
-class LLMClient(Protocol):
-    def rank_functions(
-        self,
-        exports: list[dict],
-        cve_report: str,
-        vuln_type: str,
-        top_k: int,
-    ) -> list[dict]:
-        ...
 
 
 class FunctionSelector:
