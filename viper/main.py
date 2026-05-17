@@ -1,6 +1,5 @@
 import click
-
-
+from viper.logger import get_logger, enable_console_logging
 from viper.core.pipeline import Pipeline
 
 
@@ -18,6 +17,7 @@ def cli() -> None:
 )
 def analyze(repo: str) -> None:
     """Run analysis stage."""
+    enable_console_logging()
     pipeline = Pipeline(repo=repo)
     pipeline.analyze()
 
@@ -30,6 +30,7 @@ def analyze(repo: str) -> None:
 )
 def run(repo: str) -> None:
     """Run full pipeline."""
+    enable_console_logging()
     pipeline = Pipeline(repo=repo)
     pipeline.run()
 
