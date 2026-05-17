@@ -4,7 +4,7 @@ from pathlib import Path
 
 try:
     from pyfiglet import figlet_format
-except Exception:  # pragma: no cover - optional dependency
+except Exception:
     figlet_format = None
 
 from viper.logger import get_logger
@@ -67,7 +67,7 @@ class Pipeline:
         self._console_spaced(f"[ {stage} STAGE ]", color="blue")
 
     def _stage_end(self, stage: str) -> None:
-        return
+        self._console_spaced(f"[ {stage} STAGE ]", color="blue")
 
     def _module_start(self, module: str) -> None:
         self._console_spaced(f"[ {module} STAGE ]", color="white")
@@ -75,7 +75,7 @@ class Pipeline:
     def _module_end(self, module: str, detail: str = "") -> None:
         message = f"{module} COMPLETED"
         if detail:
-            message = f"{message} {detail}"
+            message = f"{message} ({detail})"
         self._console_spaced(message, color="green")
 
     @contextmanager
@@ -209,7 +209,7 @@ class Pipeline:
                 )
 
     def generate_poc(self) -> None:
-        stage = "GENERATE POC"
+        stage = "POC GENERATION"
         with self._stage_indicator(stage):
             if not self.analysis_contexts:
                 self._detail("No analysis context found")
@@ -263,7 +263,7 @@ class Pipeline:
                     self._detail(f"Explanation: {generated.explanation}")
 
                 except Exception as e:
-                    self.logger.error(f"[GENERATE POC] failed for {cve_id}")
+                    self._console_spaced(f"failed for {cve_id}", color="red", level="error")
                     self._detail(f"PoC generation failed for {cve_id}: {e}")
 
     def _load_vulnerabilities(self, vuln_path: str | Path) -> list[dict]:
