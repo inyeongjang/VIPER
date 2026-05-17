@@ -1,13 +1,12 @@
 import click
-
-
+from viper.logger import enable_console_logging
 from viper.core.pipeline import Pipeline
 
 
 @click.group()
 def cli() -> None:
     """Viper CLI entrypoint."""
-    pass
+    enable_console_logging()
 
 
 @cli.command()

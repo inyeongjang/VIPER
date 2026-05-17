@@ -23,16 +23,12 @@ class VulnTypeClassifier:
     def classify(self, cve_description: str) -> str:
         result = self._keyword_classify(cve_description)
         if result:
-            print(f"[VulnTypeClassifier] Keyword mapping succeeded: {result}")
             return result
 
         if self.llm_client is None:
-            print("[VulnTypeClassifier] No LLM client provided. Return Unknown.")
             return "Unknown"
 
-        print("[VulnTypeClassifier] Keyword mapping failed. Trying LLM classification.")
         result = self._llm_classify(cve_description)
-        print(f"[VulnTypeClassifier] LLM classification result: {result}")
         return result
 
     def _keyword_classify(self, description: str) -> str | None:
@@ -63,7 +59,6 @@ CVE description:
             response = self.llm_client.generate(prompt)
             return self._parse_response(response)
         except Exception as e:
-            print(f"[VulnTypeClassifier] LLM call failed: {e}")
             return "Unknown"
 
     def _parse_response(self, response: str) -> str:
@@ -77,5 +72,4 @@ CVE description:
             if vuln_type.lower() in cleaned.lower():
                 return vuln_type
 
-        print(f"[VulnTypeClassifier] Failed to parse LLM response: {response}")
         return "Unknown"

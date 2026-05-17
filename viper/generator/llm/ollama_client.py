@@ -1,13 +1,9 @@
 import json
-import logging
 from typing import List
 
 import requests
 
 from viper.generator.prompt.function_ranking_prompt import build_ranking_prompt
-
-
-logger = logging.getLogger("viper.llm.ollama")
 
 
 class OllamaLLMClient:
@@ -37,12 +33,9 @@ class OllamaLLMClient:
                 timeout=120,
             )
         except requests.RequestException as e:
-            logger.error("[Ollama] request exception: %s", e)
             return []
 
         if response.status_code != 200:
-            logger.error("[Ollama] request failed: %s", response.status_code)
-            logger.debug(response.text)
             return []
 
         text = response.json().get("response", "")
@@ -50,8 +43,6 @@ class OllamaLLMClient:
         try:
             parsed = json.loads(text)
         except json.JSONDecodeError:
-            logger.error("[Ollama] invalid JSON response, skipped")
-            logger.debug(text)
             return []
 
         if isinstance(parsed, dict):
@@ -65,8 +56,6 @@ class OllamaLLMClient:
                 parsed = [parsed]
 
         if not isinstance(parsed, list):
-            logger.error("[Ollama] response is not a list, skipped")
-            logger.debug(text)
             return []
 
         return [item for item in parsed if isinstance(item, dict)]
@@ -84,12 +73,9 @@ class OllamaLLMClient:
                 timeout=120,
             )
         except requests.RequestException as e:
-            logger.exception("Ollama request failed")
             raise RuntimeError(f"Ollama request failed: {e}") from e
 
         if response.status_code != 200:
-            logger.error("Ollama request failed: %s", response.status_code)
-            logger.debug(response.text)
             raise RuntimeError(f"Ollama request failed: {response.status_code}\n{response.text}")
 
         return response.json().get("response", "")

@@ -26,11 +26,6 @@ class GrypeRunner:
             "json",
         ]
 
-        print(
-            f"[GrypeRunner] Running command: "
-            f"{' '.join(command)}"
-        )
-
         result = subprocess.run(
             command,
             capture_output=True,
@@ -45,11 +40,6 @@ class GrypeRunner:
         output_path.write_text(
             result.stdout,
             encoding="utf-8",
-        )
-
-        print(
-            f"[GrypeRunner] Vulnerability report saved to: "
-            f"{output_path}"
         )
 
         return output_path

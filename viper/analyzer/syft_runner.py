@@ -26,11 +26,6 @@ class SyftRunner:
             "json",
         ]
 
-        print(
-            f"[SyftRunner] Running command: "
-            f"{' '.join(command)}"
-        )
-
         result = subprocess.run(
             command,
             capture_output=True,
@@ -45,11 +40,6 @@ class SyftRunner:
         output_path.write_text(
             result.stdout,
             encoding="utf-8",
-        )
-
-        print(
-            f"[SyftRunner] SBOM saved to: "
-            f"{output_path}"
         )
 
         return output_path
