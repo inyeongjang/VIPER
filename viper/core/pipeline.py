@@ -1,7 +1,7 @@
 import json
-import logging
 from pathlib import Path
 
+from viper.logger import get_logger
 from viper.analyzer.repo_cloner import RepoCloner
 from viper.analyzer.syft_runner import SyftRunner
 from viper.analyzer.grype_runner import GrypeRunner
@@ -18,41 +18,12 @@ from viper.generator.poc_generator import (
 )
 
 
-def setup_logger() -> logging.Logger:
-    log_dir = Path("outputs/logs")
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    logger = logging.getLogger("viper")
-    logger.setLevel(logging.INFO)
-
-    if logger.handlers:
-        return logger
-
-    formatter = logging.Formatter(
-        "[%(asctime)s] [%(levelname)s] %(message)s"
-    )
-
-    file_handler = logging.FileHandler(
-        log_dir / "pipeline.log",
-        encoding="utf-8",
-    )
-    file_handler.setFormatter(formatter)
-
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(stream_handler)
-
-    return logger
-
-
 class Pipeline:
     """Main VIPER pipeline."""
 
     def __init__(self, repo: str):
         self.repo = repo
-        self.logger = setup_logger()
+        self.logger = get_logger(__name__)
 
         self.repo_path = None
         self.sbom_path = None

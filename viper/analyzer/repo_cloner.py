@@ -14,7 +14,6 @@ class RepoCloner:
         repo_path = Path(repo)
 
         if repo_path.exists():
-            print(f"[RepoCloner] Using local repository: {repo_path}")
             prepared_path = repo_path.resolve()
         elif repo.startswith("http://") or repo.startswith("https://"):
             prepared_path = self._clone(repo, workdir)
@@ -34,10 +33,7 @@ class RepoCloner:
         target_path = output_dir / repo_name
 
         if target_path.exists():
-            print(f"[RepoCloner] Repository already exists: {target_path}")
             return target_path.resolve()
-
-        print(f"[RepoCloner] Cloning repository: {repo_url}")
 
         result = subprocess.run(
             ["git", "clone", repo_url, str(target_path)],
@@ -55,16 +51,12 @@ class RepoCloner:
         node_modules = repo_path / "node_modules"
 
         if not package_json.exists():
-            print("[RepoCloner] package.json not found. Skipping npm install.")
             return
 
         if node_modules.exists():
-            print("[RepoCloner] node_modules already exists. Skipping npm install.")
             return
 
         command = self._get_npm_install_command(repo_path)
-
-        print(f"[RepoCloner] Installing npm dependencies: {' '.join(command)}")
 
         result = subprocess.run(
             command,
@@ -81,8 +73,6 @@ class RepoCloner:
                 f"STDOUT:\n{result.stdout}\n\n"
                 f"STDERR:\n{result.stderr}"
             )
-
-        print("[RepoCloner] npm dependencies installed.")
 
     def _get_npm_install_command(self, repo_path: Path) -> list[str]:
         package_lock = repo_path / "package-lock.json"
