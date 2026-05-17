@@ -12,12 +12,32 @@ FILE_FORMAT = "[%(asctime)s] [%(levelname)-8s] [%(name)s:%(funcName)s:%(lineno)d
 FILE_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
+class _ColorFormatter(logging.Formatter):
+    COLORS = {
+        "white": "",
+        "blue": "\033[34m",
+        "green": "\033[32m",
+        "yellow": "\033[33m",
+        "red": "\033[31m",
+        "cyan": "\033[36m",
+        "magenta": "\033[35m",
+    }
+    RESET = "\033[0m"
+
+    def format(self, record: logging.LogRecord) -> str:
+        message = super().format(record)
+        color_name = getattr(record, "console_color", "white")
+        color = self.COLORS.get(str(color_name).lower(), "")
+
+        if not color:
+            return message
+
+        return f"{color}{message}{self.RESET}"
+
+
 def _create_console_formatter() -> logging.Formatter:
     """Create a clean console log formatter."""
-    return logging.Formatter(
-        CONSOLE_FORMAT,
-        datefmt=CONSOLE_DATE_FORMAT
-    )
+    return _ColorFormatter("%(message)s", datefmt=CONSOLE_DATE_FORMAT)
 
 
 def _create_file_formatter() -> logging.Formatter:
@@ -42,11 +62,12 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
     if logger.hasHandlers():
         return logger
     
-    log_dir = Path("logs")
+    log_dir = Path("outputs") / "logs"
     log_dir.mkdir(exist_ok=True)
     
     file_handler = logging.FileHandler(
-        log_dir / "viper.log",
+        log_dir / "pipeline.log",
+        mode="w",
         encoding="utf-8"
     )
     file_handler.setLevel(logging.DEBUG)
