@@ -40,7 +40,6 @@ class FunctionSelector:
         )
 
         if not exports:
-            print("[FunctionSelector] No exported functions found.")
             return []
 
         ranked = self._rank_in_chunks(
@@ -66,8 +65,7 @@ class FunctionSelector:
         )
 
         if package_root is None:
-            print(f"[FunctionSelector] Package source not found: {package_name}")
-            return []
+            raise FileNotFoundError(f"Package source not found: {package_name}")
 
         result = subprocess.run(
             [
@@ -82,15 +80,18 @@ class FunctionSelector:
         )
 
         if result.returncode != 0:
-            print(f"[FunctionSelector] export extraction failed:\n{result.stderr}")
-            return []
+            stderr = result.stderr.strip()
+            raise RuntimeError(
+                f"Export extraction failed for {package_name}: "
+                f"{stderr or 'unknown error'}"
+            )
 
         try:
             return json.loads(result.stdout)
-        except json.JSONDecodeError:
-            print("[FunctionSelector] invalid export JSON:")
-            print(result.stdout)
-            return []
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Invalid export JSON for {package_name}: {result.stdout}"
+            ) from exc
 
     def _resolve_package_root(
         self,
@@ -140,8 +141,6 @@ class FunctionSelector:
         intermediate_exports: list[dict] = []
 
         for idx, chunk in enumerate(chunked(exports, self.chunk_size), start=1):
-            print(f"[FunctionSelector] Ranking chunk {idx} ({len(chunk)} exports)")
-
             ranked_chunk = self.llm_client.rank_functions(
                 exports=chunk,
                 cve_report=cve_report,
@@ -160,13 +159,9 @@ class FunctionSelector:
         intermediate_exports = self._deduplicate_exports(intermediate_exports)
 
         if not intermediate_exports:
-            print("[FunctionSelector] No valid intermediate candidates.")
-            return []
-
-        print(
-            f"[FunctionSelector] Final ranking from "
-            f"{len(intermediate_exports)} candidates"
-        )
+            raise RuntimeError(
+                f"No valid function candidates ranked for {top_k=}"
+            )
 
         final_ranked = self.llm_client.rank_functions(
             exports=intermediate_exports,
@@ -190,7 +185,6 @@ class FunctionSelector:
                 continue
 
             if name in export_map:
-                print(f"[FunctionSelector] duplicate export name skipped: {name}")
                 continue
 
             export_map[name] = fn
@@ -241,7 +235,6 @@ class FunctionSelector:
             name = self._get_llm_returned_name(item)
 
             if name not in export_map:
-                print(f"[FunctionSelector] Skip invalid LLM item during {stage}: {item}")
                 continue
 
             original = dict(export_map[name])
@@ -263,7 +256,6 @@ class FunctionSelector:
             name = self._get_llm_returned_name(item)
 
             if name not in export_map:
-                print(f"[FunctionSelector] Skip invalid LLM item during {stage}: {item}")
                 continue
 
             original = export_map[name]
