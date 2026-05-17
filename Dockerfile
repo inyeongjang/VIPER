@@ -16,6 +16,11 @@ RUN apt-get update && apt-get install -y \
     npm \
     && rm -rf /var/lib/apt/lists/*
 
+# Python dependencies
+WORKDIR /workspace
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
 # Syft install
 RUN curl -sSfL https://get.anchore.io/syft | sh -s -- -b /usr/local/bin
 

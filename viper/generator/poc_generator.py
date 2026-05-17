@@ -5,7 +5,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from viper.generator.llm.base_client import LLMClient
 
 from viper.generator.context.function_selector import (
     VulnerableFunctionCandidate,
@@ -43,9 +43,6 @@ class GeneratedPoC:
     explanation: str
 
 
-class LLMClient(Protocol):
-    def generate(self, prompt: str) -> str:
-        ...
 
 
 class PoCGenerator:

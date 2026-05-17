@@ -69,13 +69,29 @@ Do NOT generate these invalid patterns:
 - Mock-only PoC: mocking the vulnerable package instead of invoking it
 - Non-executable fragments
 
-Return ONLY JSON in the following format:
+Return ONLY a valid JSON object.
+
+Do not include:
+- markdown code fences
+- ```json
+- explanations outside JSON
+- JavaScript template literals
+- backtick strings
+- comments before or after JSON
+
+Important JSON formatting rules:
+- The response must be parseable by Python json.loads().
+- The "code" field must be a valid JSON string.
+- Escape all newlines in the "code" field as \\n.
+- Escape all double quotes inside the JavaScript code as \\".
+- Do not use backticks for the "code" value.
+
+Return exactly this JSON shape:
 {{
   "filename": "poc.js",
-  "code": "... full JavaScript code ...",
+  "code": "const pkg = require('PACKAGE_NAME');\\nconsole.log('POC_FAILED');",
   "explanation": "brief explanation of the exploitability path"
-}}
-""".strip()
+}}""".strip()
 
     def _format_list(self, items: list[str]) -> str:
         if not items:
