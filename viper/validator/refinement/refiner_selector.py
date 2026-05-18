@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from failure_analyzer import FailureInfo
-from error_refiner import ErrorRefiner
-from sanity_refiner import SanityRefiner
-from oracle_refiner import OracleRefiner
-from context_refiner import ContextRefiner
+from .failure_analyzer import FailureInfo
+from .error_refiner import ErrorRefiner
+from .sanity_refiner import SanityRefiner
+from .oracle_refiner import OracleRefiner
+from .context_refiner import ContextRefiner
 
 
 class RefinerSelector:
