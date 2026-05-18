@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from failure_analyzer import FailureInfo
+from .failure_analyzer import FailureInfo
 
 
 # 취약점 유형별 oracle 충족 조건
