@@ -2,7 +2,7 @@ import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from viper.generator.llm.base_client import LLMClient
+from viper.llm.base_client import LLMClient
 
 
 @dataclass
