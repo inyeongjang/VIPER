@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import subprocess
 
 
@@ -35,8 +36,10 @@ class RepoCloner:
         if target_path.exists():
             return target_path.resolve()
 
+        git_executable = self._resolve_executable("git")
+
         result = subprocess.run(
-            ["git", "clone", repo_url, str(target_path)],
+            [git_executable, "clone", repo_url, str(target_path)],
             capture_output=True,
             text=True,
         )
@@ -76,8 +79,19 @@ class RepoCloner:
 
     def _get_npm_install_command(self, repo_path: Path) -> list[str]:
         package_lock = repo_path / "package-lock.json"
+        npm_executable = self._resolve_executable("npm")
 
         if package_lock.exists():
-            return ["npm", "ci"]
+            return [npm_executable, "ci"]
 
-        return ["npm", "install"]
+        return [npm_executable, "install"]
+
+    def _resolve_executable(self, executable_name: str) -> str:
+        resolved = shutil.which(executable_name)
+
+        if resolved:
+            return resolved
+
+        raise FileNotFoundError(
+            f"Required executable not found on PATH: {executable_name}"
+        )

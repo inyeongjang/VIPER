@@ -103,7 +103,10 @@ class Pipeline:
             self._detail(f"Target repository: {self.repo}")
 
             self._module_start("REPOSITORY PREPARATION")
-            self.repo_path = RepoCloner().prepare(self.repo)
+            self.repo_path = RepoCloner().prepare(
+                self.repo,
+                install_dependencies=False,
+            )
             self._module_end("REPOSITORY PREPARATION", str(self.repo_path))
             self._detail(f"Prepared repository: {self.repo_path}")
 
