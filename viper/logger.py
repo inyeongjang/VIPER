@@ -63,7 +63,7 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
         return logger
     
     log_dir = Path("outputs") / "logs"
-    log_dir.mkdir(exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
     
     file_handler = logging.FileHandler(
         log_dir / "pipeline.log",
