@@ -16,12 +16,15 @@ from viper.analyzer.codeql_runner import CodeQLRunner
 from viper.generator.context.vuln_type_classifier import VulnTypeClassifier
 from viper.generator.context.function_selector import FunctionSelector
 from viper.generator.context.snippet_selector import SnippetSelector
-from viper.generator.llm.ollama_client import OllamaLLMClient
+from viper.llm.ollama_client import OllamaLLMClient
 
 from viper.generator.poc_generator import (
     PoCGenerationContext,
     PoCGenerator,
 )
+from viper.reporter.analyzer import analyze_vulnerability
+from viper.reporter.builder import build_vex_document
+from viper.reporter.exporter import export_vex_json
 
 
 class Pipeline:
@@ -35,9 +38,13 @@ class Pipeline:
         self.sbom_path = None
         self.vuln_path = None
         self.codeql_result_path = None
+        self.report_path = None
 
+        self.sbom_result = {}
         self.vulnerabilities = []
         self.analysis_contexts = []
+        self.poc_results = []
+        self.report_results = []
 
     def _banner(self, title: str) -> str:
         width = max(len(title) + 8, 52)
@@ -107,6 +114,7 @@ class Pipeline:
             )
             self._module_end("SBOM GENERATION", str(self.sbom_path))
             self._detail(f"SBOM saved to: {self.sbom_path}")
+            self.sbom_result = json.loads(Path(self.sbom_path).read_text(encoding="utf-8"))
 
             self._module_start("VULNERABILITY SCAN")
             self.vuln_path = GrypeRunner().run(
@@ -221,6 +229,7 @@ class Pipeline:
             )
 
             generator = PoCGenerator(llm_client=llm_client)
+            self.poc_results = []
 
             for context in self.analysis_contexts:
                 cve_id = context["cve_id"]
@@ -259,12 +268,31 @@ class Pipeline:
                     output_dir = Path("outputs/pocs") / cve_id
                     saved_path = generator.save(generated, output_dir=output_dir)
 
+                    self.poc_results.append(
+                        {
+                            "cve_id": cve_id,
+                            "success": True,
+                            "verified": False,
+                            "log": generated.explanation,
+                            "poc_path": str(saved_path),
+                        }
+                    )
+
                     self._detail(f"Generated PoC path: {saved_path}")
                     self._detail(f"Explanation: {generated.explanation}")
 
                 except Exception as e:
                     self._console_spaced(f"failed for {cve_id}", color="red", level="error")
                     self._detail(f"PoC generation failed for {cve_id}: {e}")
+                    self.poc_results.append(
+                        {
+                            "cve_id": cve_id,
+                            "success": False,
+                            "verified": False,
+                            "log": str(e),
+                            "poc_path": None,
+                        }
+                    )
 
     def _load_vulnerabilities(self, vuln_path: str | Path) -> list[dict]:
         vuln_path = Path(vuln_path)
@@ -315,7 +343,40 @@ class Pipeline:
         with self._stage_indicator(stage):
             self._detail(f"Target repository: {self.repo}")
 
-            # TODO
+            if not self.analysis_contexts:
+                self._detail("No analysis context found")
+                return
+
+            analysis_results = []
+
+            for context in self.analysis_contexts:
+                cve_id = context["cve_id"]
+                package_name = context["package_name"]
+                package_version = context["package_version"] or ""
+
+                poc_result = next(
+                    (result for result in self.poc_results if result["cve_id"] == cve_id),
+                    {},
+                )
+
+                analysis_result = analyze_vulnerability(
+                    cve_id=cve_id,
+                    package_name=package_name,
+                    package_version=package_version,
+                    sbom_result=self.sbom_result,
+                    poc_result=poc_result,
+                )
+                analysis_results.append(analysis_result)
+
+            vex_document = build_vex_document(analysis_results)
+            self.report_path = export_vex_json(
+                vex_document=vex_document,
+                output_path="outputs/vex/vex.json",
+            )
+            self.report_results = analysis_results
+
+            self._detail(f"VEX report saved to: {self.report_path}")
+            self._detail(f"VEX statement count: {len(analysis_results)}")
 
     def run(self) -> None:
         self._console(self._logo(), color="blue")
