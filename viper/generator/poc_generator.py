@@ -4,7 +4,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from viper.generator.llm.base_client import LLMClient
+from viper.llm.base_client import LLMClient
 
 from viper.generator.context.function_selector import (
     VulnerableFunctionCandidate,
