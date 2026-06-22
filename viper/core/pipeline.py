@@ -17,6 +17,8 @@ from viper.generator.context.vuln_type_classifier import VulnTypeClassifier
 from viper.generator.context.function_selector import FunctionSelector
 from viper.generator.context.snippet_selector import SnippetSelector
 from viper.llm.ollama_client import OllamaLLMClient
+from viper.validator.poc_runner import PoCRunner
+from viper.validator.validator import Validator, ExecutionResult
 
 from viper.generator.poc_generator import (
     PoCGenerationContext,
@@ -338,7 +340,66 @@ class Pipeline:
         stage = "VALIDATE POC"
         with self._stage_indicator(stage):
             self._detail(f"Target repository: {self.repo}")
+            runner = PoCRunner()
+            validator = Validator()
+            for context in self.analysis_contexts:
+                cve_id = context["cve_id"]
+                vuln_type = context["vuln_type"]
 
+                if not context["function_candidates"]:
+                    self._detail(f"Skip validation for {cve_id}: no function candidate")
+                    continue
+
+                function_name = context["function_candidates"][0].name
+
+                poc_result = next(
+                    (
+                        result
+                        for result in self.poc_results
+                        if result["cve_id"] == cve_id
+                    ),
+                    None,
+                )
+
+                if not poc_result:
+                    self._detail(f"Skip validation for {cve_id}: no PoC result")
+                    continue
+
+                if not poc_result.get("poc_path"):
+                    self._detail(f"Skip validation for {cve_id}: no PoC path")
+                    continue
+
+                poc_dir = Path(poc_result["poc_path"]).parent
+
+                run_result = runner.run_validation(
+                    cve_id=cve_id,
+                    repo_path=Path(self.repo_path),
+                    poc_dir=poc_dir,
+                )
+
+                execution_result = ExecutionResult(
+                    stdout=run_result.get("stdout", run_result.get("logs", "")),
+                    stderr=run_result.get("stderr", ""),
+                    exit_code=run_result.get("exit_code", 1),
+                    execution_time_ms=run_result.get("execution_time_ms", 0),
+                    files_created=run_result.get("files_created", []),
+                    crashed=run_result.get("crashed", False),
+                )
+
+                validation = validator.validate(
+                    result=execution_result,
+                    vuln_type=vuln_type,
+                    function_name=function_name,
+                )
+
+                poc_result["verified"] = validation.validation_result == "PASS"
+                poc_result["validation_reason"] = validation.validation_reason
+                poc_result["validation_status"] = validation.validation_result
+
+                self._detail(
+                    f"Validation result for {cve_id}: "
+                    f"{validation.validation_result} - {validation.validation_reason}"
+                )
             # TODO
 
     def report(self) -> None:
