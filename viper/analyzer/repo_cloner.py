@@ -77,7 +77,10 @@ class RepoCloner:
     def _get_npm_install_command(self, repo_path: Path) -> list[str]:
         package_lock = repo_path / "package-lock.json"
 
-        npm_cmd = "npm.cmd"
+        try:
+            npm_executable = self._resolve_executable("npm.cmd")
+        except FileNotFoundError:
+            npm_executable = self._resolve_executable("npm")
 
         if package_lock.exists():
             return [npm_cmd, "ci"]

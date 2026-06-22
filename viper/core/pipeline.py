@@ -18,7 +18,7 @@ from viper.generator.context.function_selector import FunctionSelector
 from viper.generator.context.snippet_selector import SnippetSelector
 from viper.generator.llm.ollama_client import OllamaLLMClient
 
-from viper.generator.poc_generator import (
+from viper.validator.validator import (
     Validator,
     ExecutionResult,
 )
@@ -303,48 +303,46 @@ class Pipeline:
 
         return vulnerabilities
 
-# TODO: sandbox 연동 후 실제 ExecutionResult로 교체
-# Mock execution result for validator integration test
-def validate_poc(self) -> None:
-    stage = "VALIDATE POC"
+    def validate_poc(self) -> None:
+        stage = "VALIDATE POC"
 
-    with self._stage_indicator(stage):
+        with self._stage_indicator(stage):
 
-        if not self.analysis_contexts:
-            self._detail("No analysis context found")
-            return
+            if not self.analysis_contexts:
+                self._detail("No analysis context found")
+                return
 
-        validator = Validator()
+            validator = Validator()
 
-        for context in self.analysis_contexts:
+            for context in self.analysis_contexts:
 
-            function_candidates = context["function_candidates"]
+                function_candidates = context["function_candidates"]
 
-            if not function_candidates:
-                continue
+                if not function_candidates:
+                    continue
 
-            vulnerable_function = function_candidates[0]
+                vulnerable_function = function_candidates[0]
 
-            mock_result = ExecutionResult(
-                stdout="POC_SUCCESS\nexploited=true",
-                stderr=vulnerable_function.name,
-                exit_code=0,
-                execution_time_ms=2000,
-                files_created=[],
-                crashed=False,
-            )
+                mock_result = ExecutionResult(
+                    stdout="POC_SUCCESS\nexploited=true",
+                    stderr=vulnerable_function.name,
+                    exit_code=0,
+                    execution_time_ms=2000,
+                    files_created=[],
+                    crashed=False,
+                )
 
-            validation_result = validator.validate(
-                result=mock_result,
-                vuln_type=context["vuln_type"],
-                function_name=vulnerable_function.name,
-            )
+                validation_result = validator.validate(
+                    result=mock_result,
+                    vuln_type=context["vuln_type"],
+                    function_name=vulnerable_function.name,
+                )
 
-            self._detail(
-                f"[VALIDATION] "
-                f"{context['cve_id']} -> "
-                f"{validation_result.validation_result}"
-            )
+                self._detail(
+                    f"[VALIDATION] "
+                    f"{context['cve_id']} -> "
+                    f"{validation_result.validation_result}"
+                )
 
     def report(self) -> None:
         stage = "REPORT"
