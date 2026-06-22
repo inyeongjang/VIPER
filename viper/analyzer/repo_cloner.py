@@ -83,14 +83,3 @@ class RepoCloner:
             return [npm_cmd, "ci"]
 
         return [npm_cmd, "install"]
-
-
-'''
-    def _get_npm_install_command(self, repo_path: Path) -> list[str]:
-        package_lock = repo_path / "package-lock.json"
-
-        if package_lock.exists():
-            return ["npm", "ci"]
-
-        return ["npm", "install"]
-'''
