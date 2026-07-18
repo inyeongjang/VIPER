@@ -20,9 +20,9 @@ from viper.llm.ollama_client import OllamaLLMClient
 from viper.validator.poc_runner import PoCRunner
 from viper.validator.validator import Validator, ExecutionResult
 
-from viper.generator.poc_generator import (
-    PoCGenerationContext,
-    PoCGenerator,
+from viper.validator.validator import (
+    Validator,
+    ExecutionResult,
 )
 from viper.reporter.analyzer import analyze_vulnerability
 from viper.reporter.builder import build_vex_document
@@ -338,6 +338,7 @@ class Pipeline:
 
     def validate_poc(self) -> None:
         stage = "VALIDATE POC"
+
         with self._stage_indicator(stage):
             self._detail(f"Target repository: {self.repo}")
             runner = PoCRunner()

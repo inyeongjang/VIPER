@@ -81,6 +81,11 @@ class RepoCloner:
         package_lock = repo_path / "package-lock.json"
         npm_executable = self._resolve_executable("npm")
 
+        try:
+            npm_executable = self._resolve_executable("npm.cmd")
+        except FileNotFoundError:
+            npm_executable = self._resolve_executable("npm")
+
         if package_lock.exists():
             return [npm_executable, "ci"]
 
